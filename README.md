@@ -1,12 +1,8 @@
 # logger
 GoLang logger package
 
-This site was built using [GitHub Pages](https://pages.github.com/).<br />
-This site was built using [https://pages.github.com/](https://pages.github.com/).<br />
+A general **server back-end** logger package.<br />
+`Init()` should be invoked to initialized the logger.<br />
+<br />
 
-1. First item
-2. Second item
-   - First sub-item
-   - First sub-sub-item<br />
-
-Simple text.<br />
+`LogDispatcher()` is to invoked as a part of waitgroup.
