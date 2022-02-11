@@ -109,7 +109,7 @@ func Log(strcomponent string, loglevelStr string, msg string, args ...interface{
 		t.Second(), t.Nanosecond(), zonename)
 
 	pc, fn, line, _ := runtime.Caller(1)
-	logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s: %d] [%s]:\n", strComponent, msgTimeStamp, loglevelStr, filepath.Base(fn), line, runtime.FuncForPC(pc).Name())
+	logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s: %d] [%s]:\n", strcomponent, msgTimeStamp, loglevelStr, filepath.Base(fn), line, runtime.FuncForPC(pc).Name())
 
 	logMsg = fmt.Sprintf(logMsg+msg, args...)
 	logMsg = logMsg + "\n"
