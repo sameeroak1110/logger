@@ -36,6 +36,7 @@ import (
 	"sync"
 	"time"
 	"syscall"
+	"strings"
 )
 
 
@@ -92,14 +93,15 @@ func Log(strcomponent string, loglevelStr string, msg string, args ...interface{
 	defer func() {  // chanbuffLog has been closed.
 		if recoverVal := recover(); recoverVal != nil {
 			fmt.Println("[WARNING]::  Log(): recover value:", recoverVal)
-		}/* else {
-			fmt.Println("[DEBUG]::  Log(): no panic!")
-		} */
+		}
 	}()
 
-	defaultLoglevelVal := uint8(loglevel[default_LOG_LEVEL])  // 0: DBGRM, 1: DEBUG, 2: INFO, 3: WARNING, 4: ERROR
-	msgLoglevelVal := loglevel[loglevelStr]
-	if msgLoglevelVal < defaultLoglevelVal {
+	currentLoglevel := loglevelMap[current_LOG_LEVEL]  // 0: DBGRM, 1: DEBUG, 2: INFO, 3: WARNING, 4: ERROR
+	msgLoglevel, isOK := loglevelMap[loglevelStr]
+	if !isOK {
+		return
+	}
+	if (msgLoglevel.wt < currentLoglevel.wt) && (currentLoglevel.wt != 1) {  // silently slips through a DBGRM message when currentLoglevel.wt is 1, ie, DEBUG.
 		return
 	}
 
@@ -109,10 +111,24 @@ func Log(strcomponent string, loglevelStr string, msg string, args ...interface{
 		t.Second(), t.Nanosecond(), zonename)
 
 	pc, fn, line, _ := runtime.Caller(1)
-	logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s: %d] [%s]:\n", strcomponent, msgTimeStamp, loglevelStr, filepath.Base(fn), line, runtime.FuncForPC(pc).Name())
+	_, filePath := getFilePath(fn, srcBasePath)
 
+	msgPrefix := ""
+	if loglevelStr == "DBGRM" {
+		msgPrefix = "#### ####  "
+	}
+
+	logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s: %d] [%s]:\n", strcomponent, msgTimeStamp, loglevelStr, filepath.Base(fn), line, runtime.FuncForPC(pc).Name())
 	logMsg = fmt.Sprintf(logMsg+msg, args...)
-	logMsg = logMsg + "\n"
+	logMsg = msgPrefix + logMsg + "\n"
+
+	if !isLoggerInstanceInit {
+		//logMsg = msgLoglevel.color + msgPrefix + logMsg + colorNornal + "\n"
+		logMsg = msgLoglevel.color + logMsg + colorNornal
+		fmt.Printf(logMsg)
+		return
+	}
+
 	logMessage := logmessage {
 		component: strcomponent,
 		logmsg: logMsg,
@@ -264,23 +280,36 @@ Description :
 - Creates a directory $PWD/logs/server_logs if doesn't exist and creates first logfile
 underneath.
 
-Arguments   : na
+Arguments   :
+1> isLoggerInstanceInit bool: true if logger data to be initialized. false in case logs are sent to stdout and not to any log file.
+
 
 Return value:
 1> bool: True if successful, false otherwise.
 
 Additional note: na
 ***************************************************************************** */
-func Init() bool {
-	// logs/server_logs
-	currDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	if err != nil {
-		fmt.Printf("error-2: %s\n", err.Error())  // Error: abs path: %s\n", err.Error())
+func Init(isLoggerInit bool, logBaseDir string, logLevel string) bool {
+	if isInit {
+		return true
+	}
+
+	var err error
+	if logBaseDir = strings.TrimSpace(logBaseDir); logBaseDir == "" {
+		if logBaseDir, err = filepath.Abs(filepath.Dir(os.Args[0])); err != nil {
+			fmt.Printf("Error-1: %s\nlogBaseDir: %s\n", err.Error(), logBaseDir)  // Error: abs path: %s\n", err.Error())
+			return false
+		}
+	}
+
+	logLevel = strings.ToUpper(strings.TrimSpace(logLevel))
+	if (logLevel != DBGRM) && (logLevel != DEBUG) && (logLevel != INFO ) && (logLevel != WARNING) && (logLevel != ERROR) {  // covers logLevel == ""
+		fmt.Printf("Error-2: Incorrect log-level. Possible values are: DEBUG, INFO, WARNING, ERROR\n")
 		return false
 	}
 
-	logDir := filepath.Join(currDir, filepath.Join("logs", filepath.Join("server_logs")))
-	if err = os.MkdirAll(logDir, os.ModePerm); err != nil {
+	logdir := filepath.Join(logBaseDir, filepath.Join("logs", filepath.Join("server")))
+	if err := os.MkdirAll(logdir, os.ModePerm); err != nil {
 		fmt.Printf("error-3: %s\n", err.Error())  // Error: while creating logenv: %s\n", err.Error())
 		return false
 	}
@@ -289,8 +318,8 @@ func Init() bool {
 
 	chanbuffLog = make(chan logmessage, 10)
 
-	logFile := filepath.Join(logDir, log_FILE_NAME_PREFIX) + ".1"
-	tmplogFile := filepath.Join(logDir, log_FILE_NAME_PREFIX)
+	logFile := filepath.Join(logdir, log_FILE_NAME_PREFIX) + ".1"
+	tmplogFile := filepath.Join(logdir, log_FILE_NAME_PREFIX)
 	dummyLogfile = logFile + ".dummy"
 
 	pServerLogFile, err = os.OpenFile(logFile, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0644)
@@ -299,24 +328,21 @@ func Init() bool {
 		return false
 	}
 
-	loglevel = make(map[string]uint8)
-	loglevel["DBGRM"] = uint8(0)
-	loglevel["DEBUG"] = uint8(1)
-	loglevel["INFO"] = uint8(2)
-	loglevel["WARNING"] = uint8(3)
-	loglevel["ERROR"] = uint8(4)
-
 	for i := int8(0); i < log_MAX_FILES; i++ {
 		logfileNameList[i] = fmt.Sprintf("%s.%d", tmplogFile, i+1)
 	}
 
-	// closes stderr so that error and panic logs can be captured in the logfile itself.
-	if errDup2 := syscall.Dup2(int(pServerLogFile.Fd()), 2); errDup2 != nil {
-		fmt.Printf("Error: Failed to reuse STDERR.\n")
-	} else {
-		fmt.Printf("Debug: reused STDERR.\n")
+	// if isLoggerInit == true: closes stderr so that error and panic logs can be captured in the logfile itself.
+	if isLoggerInit {
+		isLoggerInstanceInit = true
+		if errDup2 := syscall.Dup2(int(pServerLogFile.Fd()), 2); errDup2 != nil {
+			fmt.Printf("Error: Failed to reuse STDERR.\n")
+		} else {
+			fmt.Printf("Debug: Reused STDERR.\n")
+		}
 	}
 
+	isInit = true
 	return true
 }
 

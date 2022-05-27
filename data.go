@@ -22,15 +22,12 @@ import (
 )
 
 
-/* log levels */
-const DBGRM string = "DBGRM"
-const DEBUG string = "DEBUG"
-const INFO string = "INFO"
-const WARNING string = "WARNING"
-const ERROR string = "ERROR"
-
-
-var loglevel map[string]uint8
+// log levels
+const DBGRM string = "DBGRM"      // green
+const DEBUG string = "DEBUG"      // normal
+const INFO string = "INFO"        // normal
+const WARNING string = "WARNING"  // yellow
+const ERROR string = "ERROR"      // red
 
 // buffered channel with size 10.
 var chanbuffLog chan logmessage
@@ -45,5 +42,42 @@ var dummyLogfile string
 
 const log_MAX_FILES int8 = 10
 const log_FILE_NAME_PREFIX string = "server.log"
-const default_LOG_LEVEL string = "debug"
 const log_FILE_SIZE int64 = 20971520 // 20 MB
+var current_LOG_LEVEL string = "DBGRM"
+
+const isInit bool = false
+var isLoggerInstanceInit bool
+var srcBasePath string
+
+const colorNornal := "\033[0m"
+const colorErrorRed := "\033[31m"
+const colorDbgrmGreen := "\033[32m"
+const colorWarnYellow := "\033[33m"
+
+var loglevelMap = map[string]loglevel {
+	"DBGRM": loglevel {
+		str:   DBGRM,
+		color: colorDbgrmGreen,
+		wt:    0,
+	},
+	"DEBUG": loglevel {
+		str:   DEBUG,
+		color: colorNornal,
+		wt:    1,
+	},
+	"INFO": loglevel {
+		str:   INFO,
+		color: colorNornal,
+		wt:    2,
+	},
+	"WARNING": loglevel {
+		str:   WARNING,
+		color: colorWarnYellow,
+		wt:    3,
+	},
+	"ERROR": loglevel {
+		str:   ERROR,
+		color: colorErrorRed,
+		wt:    4,
+	},
+}

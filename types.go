@@ -22,3 +22,17 @@ type logmessage struct {
 	component     string
 	logmsg        string
 }
+
+type LogConfig struct {
+	Directory       string `json:"directory"`        // $PWD
+	FileNamePrefix  string `json:"fileNamePrefix"`   // server.log
+	FileSize        int    `json:"fileSize"`         // 20971520 (20MB)
+	MaxFilesCnt     int    `json:"maxFilesCnt"`      // 10
+	DefaultLogLevel string `json:"defaultLogLevel"`  // DEBUG
+}
+
+type loglevel struct {
+	str   string
+	color string
+	wt    uint8
+}
