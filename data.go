@@ -45,14 +45,14 @@ const log_FILE_NAME_PREFIX string = "server.log"
 const log_FILE_SIZE int64 = 20971520 // 20 MB
 var current_LOG_LEVEL string = "DBGRM"
 
-const isInit bool = false
+var isInit bool
 var isLoggerInstanceInit bool
-var srcBasePath string
+var srcBaseDir string
 
-const colorNornal := "\033[0m"
-const colorErrorRed := "\033[31m"
-const colorDbgrmGreen := "\033[32m"
-const colorWarnYellow := "\033[33m"
+const colorNornal string = "\033[0m"
+const colorErrorRed string = "\033[31m"
+const colorDbgrmGreen string = "\033[32m"
+const colorWarnYellow string = "\033[33m"
 
 var loglevelMap = map[string]loglevel {
 	"DBGRM": loglevel {

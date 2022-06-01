@@ -60,6 +60,8 @@ func getFilePath(sourceFilePath string, defaultPath string) (bool, string) {
 		return false, filePath
 	}
 
+	fmt.Printf("dbgrm::  sourceFilePath: %s,  defaultPath: %s\n", sourceFilePath, defaultPath)
+
 	length := len(sourceFilePath) - len(defaultPath)
 	var i int
 	for i = 0; i < length; i++ {
@@ -70,8 +72,11 @@ func getFilePath(sourceFilePath string, defaultPath string) (bool, string) {
 		}
 	}
 
-	return true, sourceFilePath[i+len(defaultPath) : len(sourceFilePath)]
+	filePath = sourceFilePath[i+len(defaultPath) : len(sourceFilePath)]
+	fmt.Printf("dbgrm::  filePath: %s\n", filePath)
+	return true, filePath
 }
+
 
 /* ****************************************************************************
 Description :
@@ -90,11 +95,11 @@ Return value: na
 Additional note: na
 **************************************************************************** */
 func Log(strcomponent string, loglevelStr string, msg string, args ...interface{}) {
-	defer func() {  // chanbuffLog has been closed.
+	/* defer func() {  // chanbuffLog has been closed.
 		if recoverVal := recover(); recoverVal != nil {
 			fmt.Println("[WARNING]::  Log(): recover value:", recoverVal)
 		}
-	}()
+	}() */
 
 	currentLoglevel := loglevelMap[current_LOG_LEVEL]  // 0: DBGRM, 1: DEBUG, 2: INFO, 3: WARNING, 4: ERROR
 	msgLoglevel, isOK := loglevelMap[loglevelStr]
@@ -111,14 +116,21 @@ func Log(strcomponent string, loglevelStr string, msg string, args ...interface{
 		t.Second(), t.Nanosecond(), zonename)
 
 	pc, fn, line, _ := runtime.Caller(1)
-	_, filePath := getFilePath(fn, srcBasePath)
+	gwd, _ := os.Getwd()
+	fmt.Printf("dbgrm::  gwd: %s\n", gwd)
+	//_, filePath := getFilePath(fn, srcBaseDir)
+	//srcFile1 := strings.Split(str1, str2)
+	filePath := strings.Split(fn, srcBaseDir)
+	srcFile := srcBaseDir + filePath[len(filePath) - 1]
 
 	msgPrefix := ""
 	if loglevelStr == "DBGRM" {
 		msgPrefix = "#### ####  "
 	}
 
-	logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s: %d] [%s]:\n", strcomponent, msgTimeStamp, loglevelStr, filepath.Base(fn), line, runtime.FuncForPC(pc).Name())
+	//logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s: %d] [%s]:\n", strcomponent, msgTimeStamp, loglevelStr, filepath.Base(fn), line, runtime.FuncForPC(pc).Name())
+	//logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s: %d] [%s]:\n", strcomponent, msgTimeStamp, loglevelStr, filePath[len(filePath) - 1], line, runtime.FuncForPC(pc).Name())
+	logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s: %d] [%s]:\n", strcomponent, msgTimeStamp, loglevelStr, srcFile, line, runtime.FuncForPC(pc).Name())
 	logMsg = fmt.Sprintf(logMsg+msg, args...)
 	logMsg = msgPrefix + logMsg + "\n"
 
@@ -281,20 +293,31 @@ Description :
 underneath.
 
 Arguments   :
-1> isLoggerInstanceInit bool: true if logger data to be initialized. false in case logs are sent to stdout and not to any log file.
-
+1> isLoggerInit bool: true if logger data to be initialized. false in case logs are sent to stdout and not to any log file.
+2> tmpSrcBaseDir: absolute path of base directory of source code tree.
+3> logBaseDir: absolute path of base directory where logs will be stored.
+4> logLevel: either of DEBUG, INFO, WARNING, ERROR.
 
 Return value:
 1> bool: True if successful, false otherwise.
 
 Additional note: na
 ***************************************************************************** */
-func Init(isLoggerInit bool, logBaseDir string, logLevel string) bool {
+func Init(isLoggerInit bool, tmpSrcBaseDir string, logBaseDir string, logLevel string) bool {
 	if isInit {
 		return true
 	}
 
 	var err error
+
+	if tmpSrcBaseDir = strings.TrimSpace(tmpSrcBaseDir); tmpSrcBaseDir == "" {
+		fmt.Printf("Error-1: %s\nSource code BaseDir: %s\n", err.Error(), tmpSrcBaseDir)  // Error: abs path: %s\n", err.Error())
+		return false
+	}
+	tmpSrcBaseDir = strings.TrimLeft(tmpSrcBaseDir, "/")
+	tmpSrcBaseDir = strings.TrimRight(tmpSrcBaseDir, "/")
+	srcBaseDir = "/" + tmpSrcBaseDir
+
 	if logBaseDir = strings.TrimSpace(logBaseDir); logBaseDir == "" {
 		if logBaseDir, err = filepath.Abs(filepath.Dir(os.Args[0])); err != nil {
 			fmt.Printf("Error-1: %s\nlogBaseDir: %s\n", err.Error(), logBaseDir)  // Error: abs path: %s\n", err.Error())
