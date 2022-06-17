@@ -21,7 +21,7 @@ Description :
 <log_message>
 
 - A dispatcher go routine fetches from the channel, extracts the log message, and dumps the same in the log file.
-- Logfile(s) are located at: $PWD/logs/server_logs
+- Logfile(s) are located at: $PWD/logs
 logfile name: server.log.<no>, where "no" stands for logfile number.
 - Current logfile has extension .1.
 - Max allowed size of a logfile is 20 MB (20971520 Bytes) and logfiles are rolled over after 10 log files.
@@ -289,7 +289,7 @@ func handleLogRotate() {
 /* *****************************************************************************
 Description :
 - Initializes logger package data.
-- Creates a directory $PWD/logs/server_logs if doesn't exist and creates first logfile
+- Creates a directory $PWD/logs if doesn't exist and creates first logfile
 underneath.
 
 Arguments   :
@@ -331,7 +331,8 @@ func Init(isLoggerInit bool, tmpSrcBaseDir string, logBaseDir string, logLevel s
 		return false
 	}
 
-	logdir := filepath.Join(logBaseDir, filepath.Join("logs", filepath.Join("server")))
+	//logdir := filepath.Join(logBaseDir, filepath.Join("logs", filepath.Join("server")))
+	logdir := filepath.Join(logBaseDir, "logs")
 	if err := os.MkdirAll(logdir, os.ModePerm); err != nil {
 		fmt.Printf("error-3: %s\n", err.Error())  // Error: while creating logenv: %s\n", err.Error())
 		return false
