@@ -171,6 +171,26 @@ func LogDispatcher(ploggerWG *sync.WaitGroup, doneChan chan bool) {
 	runFlag := true
 	for runFlag {
 		select {
+			case logMsg, isOK := <-chanbuffLog: // pushes dummy logmessage onto the channel
+				if !isOK {
+					runFlag = false
+					break
+				}
+				dumpServerLog(logMsg.logmsg)
+				break
+
+			case <-doneChan:  // chanbuffLog needs to be closed. pull all the logs from the channel and dump them to file-system.
+				runFlag = false
+				dumpServerLog("[WARNING]:: logger exiting. breaking out on closed log message-queue.\nstarting to flush all the blocked logs.\n")
+				close(chanbuffLog)
+				for logMsg := range chanbuffLog {
+					dumpServerLog(logMsg.logmsg)
+				}
+				break
+		}
+	}
+	/* for runFlag {
+		select {
 			case <-doneChan:  // chanbuffLog needs to be closed. pull all the logs from the channel and dump them to file-system.
 				runFlag = false
 				dumpServerLog("[WARNING]:: logger exiting. breaking out on closed log message-queue.\nstarting to flush all the blocked logs.\n")
@@ -194,7 +214,7 @@ func LogDispatcher(ploggerWG *sync.WaitGroup, doneChan chan bool) {
 			default:
 				break
 		}
-	}
+	} */
 }
 
 
