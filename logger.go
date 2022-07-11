@@ -166,7 +166,18 @@ Return Value: na
 Additional note: na
 **************************************************************************** */
 func LogDispatcher(ploggerWG *sync.WaitGroup, doneChan chan bool) {
-	defer ploggerWG.Done()
+	defer func() {
+		fmt.Println("logger exiting.")
+		ploggerWG.Done()
+	}()
+
+	/* for {
+        select {
+            case logMsg := <-chanbuffLog: // pushes dummy logmessage onto the channel
+                dumpServerLog(logMsg.logmsg)
+        }
+    } */
+
 
 	runFlag := true
 	for runFlag {
@@ -189,6 +200,7 @@ func LogDispatcher(ploggerWG *sync.WaitGroup, doneChan chan bool) {
 				break
 		}
 	}
+
 	/* for runFlag {
 		select {
 			case <-doneChan:  // chanbuffLog needs to be closed. pull all the logs from the channel and dump them to file-system.
