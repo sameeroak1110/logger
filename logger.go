@@ -125,7 +125,7 @@ func Log(strcomponent string, loglevelStr string, msg string, args ...interface{
 
 	msgPrefix := ""
 	if loglevelStr == "DBGRM" {
-		msgPrefix = "#### ####  "
+		msgPrefix = "#### "
 	}
 
 	//logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s: %d] [%s]:\n", strcomponent, msgTimeStamp, loglevelStr, filepath.Base(fn), line, runtime.FuncForPC(pc).Name())
