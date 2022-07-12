@@ -254,7 +254,7 @@ func dumpServerLog(logMsg string) {
 	}
 
 	pServerLogFile.WriteString(logMsg)
-	fmt.Printf(logMsg) /* TODO-REM: remove this fmp.Printf() call later */
+	//fmt.Printf(logMsg) // TODO-REM: remove this fmp.Printf() call later
 
 	fi, err := pServerLogFile.Stat()
 	if err != nil {
