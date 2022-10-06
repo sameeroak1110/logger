@@ -31,6 +31,7 @@ package logger
 import (
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"sync"
@@ -116,21 +117,29 @@ func Log(strcomponent string, loglevelStr string, msg string, args ...interface{
 		t.Second(), t.Nanosecond(), zonename)
 
 	pc, fn, line, _ := runtime.Caller(1)
-	gwd, _ := os.Getwd()
-	fmt.Printf("dbgrm::  gwd: %s\n", gwd)
-	//_, filePath := getFilePath(fn, srcBaseDir)
-	//srcFile1 := strings.Split(str1, str2)
-	filePath := strings.Split(fn, srcBaseDir)
-	srcFile := srcBaseDir + filePath[len(filePath) - 1]
+
+	//gwd, _ := os.Getwd()
+	//fmt.Printf("dbgrm::  gwd: %s\n", gwd)
+	////_, filePath := getFilePath(fn, srcBaseDir)
+	////srcFile1 := strings.Split(str1, str2)
+	//filePath := strings.Split(fn, srcBaseDir)
+	//srcFile := srcBaseDir + filePath[len(filePath) - 1]
+
+	tmp1 := strings.Split((runtime.FuncForPC(pc).Name()), ".")
+	pkgname := tmp1[0]
+	srcFile := pkgname + "/" + path.Base(fn)
+	funcName := tmp1[1]
 
 	msgPrefix := ""
 	if loglevelStr == "DBGRM" {
 		msgPrefix = "#### "
 	}
 
-	//logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s: %d] [%s]:\n", strcomponent, msgTimeStamp, loglevelStr, filepath.Base(fn), line, runtime.FuncForPC(pc).Name())
-	//logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s: %d] [%s]:\n", strcomponent, msgTimeStamp, loglevelStr, filePath[len(filePath) - 1], line, runtime.FuncForPC(pc).Name())
-	logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s: %d] [%s]:\n", strcomponent, msgTimeStamp, loglevelStr, srcFile, line, runtime.FuncForPC(pc).Name())
+	////logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s: %d] [%s]:\n", strcomponent, msgTimeStamp, loglevelStr, filepath.Base(fn), line, runtime.FuncForPC(pc).Name())
+	////logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s: %d] [%s]:\n", strcomponent, msgTimeStamp, loglevelStr, filePath[len(filePath) - 1], line, runtime.FuncForPC(pc).Name())
+	//logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s: %d] [%s]:\n", strcomponent, msgTimeStamp, loglevelStr, srcFile, line, runtime.FuncForPC(pc).Name())
+	logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s +%d]@[%s]:\n", strcomponent, msgTimeStamp, loglevelStr, srcFile, line, funcName)
+
 	logMsg = fmt.Sprintf(logMsg+msg, args...)
 	logMsg = msgPrefix + logMsg + "\n"
 
@@ -172,11 +181,11 @@ func LogDispatcher(ploggerWG *sync.WaitGroup, doneChan chan bool) {
 	}()
 
 	/* for {
-        select {
-            case logMsg := <-chanbuffLog: // pushes dummy logmessage onto the channel
-                dumpServerLog(logMsg.logmsg)
-        }
-    } */
+		select {
+			case logMsg := <-chanbuffLog: // pushes dummy logmessage onto the channel
+				dumpServerLog(logMsg.logmsg)
+		}
+	} */
 
 
 	runFlag := true
