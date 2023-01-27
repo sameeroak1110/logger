@@ -400,6 +400,12 @@ func Init(isLoggerInit bool, tmpSrcBaseDir string, logBaseDir string, logLevel s
 	// if isLoggerInit == true: closes stderr so that error and panic logs can be captured in the logfile itself.
 	if isLoggerInit {
 		isLoggerInstanceInit = true
+		if errDup2 := syscall.Dup2(int(pServerLogFile.Fd()), syscall.Stderr); errDup2 != nil {
+			fmt.Printf("Error: Failed to reuse STDERR.\n")
+		} else {
+			fmt.Printf("Debug: Reused STDERR.\n")
+		}
+
 		if errDup2 := syscall.Dup2(int(pServerLogFile.Fd()), syscall.Stdout); errDup2 != nil {
 			fmt.Printf("Error: Failed to reuse STDOUT.\n")
 		} else {
