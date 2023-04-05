@@ -96,11 +96,11 @@ Return value: na
 Additional note: na
 **************************************************************************** */
 func Log(strcomponent string, loglevelStr string, msg string, args ...interface{}) {
-	/* defer func() {  // chanbuffLog has been closed.
+	defer func() {  // chanbuffLog has been closed.
 		if recoverVal := recover(); recoverVal != nil {
 			fmt.Println("[WARNING]::  Log(): recover value:", recoverVal)
 		}
-	}() */
+	}()
 
 	currentLoglevel := loglevelMap[current_LOG_LEVEL]  // 0: DBGRM, 1: DEBUG, 2: INFO, 3: WARNING, 4: ERROR
 	msgLoglevel, isOK := loglevelMap[loglevelStr]
