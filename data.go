@@ -81,3 +81,5 @@ var loglevelMap = map[string]loglevel {
 		wt:    4,
 	},
 }
+
+var doneChan chan bool

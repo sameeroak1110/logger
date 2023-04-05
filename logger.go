@@ -102,60 +102,67 @@ func Log(strcomponent string, loglevelStr string, msg string, args ...interface{
 		}
 	}()
 
-	currentLoglevel := loglevelMap[current_LOG_LEVEL]  // 0: DBGRM, 1: DEBUG, 2: INFO, 3: WARNING, 4: ERROR
-	msgLoglevel, isOK := loglevelMap[loglevelStr]
-	if !isOK {
-		return
+	select {
+		case <-doneChan: // chanbuffLog needs to be closed.
+			close(chanbuffLog)
+
+		default:
+			currentLoglevel := loglevelMap[current_LOG_LEVEL]  // 0: DBGRM, 1: DEBUG, 2: INFO, 3: WARNING, 4: ERROR
+			msgLoglevel, isOK := loglevelMap[loglevelStr]
+			if !isOK {
+				return
+			}
+			if (msgLoglevel.wt < currentLoglevel.wt) && (currentLoglevel.wt != 1) {  // silently slips through a DBGRM message when currentLoglevel.wt is 1, ie, DEBUG.
+				return
+			}
+
+			t := time.Now()
+			zonename, _ := t.In(time.Local).Zone()
+			msgTimeStamp := fmt.Sprintf("%02d-%02d-%d:%02d%02d%02d-%06d-%s", t.Day(), t.Month(), t.Year(), t.Hour(), t.Minute(),
+				t.Second(), t.Nanosecond(), zonename)
+
+			pc, fn, line, _ := runtime.Caller(1)
+
+			//gwd, _ := os.Getwd()
+			//fmt.Printf("dbgrm::  gwd: %s\n", gwd)
+			////_, filePath := getFilePath(fn, srcBaseDir)
+			////srcFile1 := strings.Split(str1, str2)
+			//filePath := strings.Split(fn, srcBaseDir)
+			//srcFile := srcBaseDir + filePath[len(filePath) - 1]
+
+			tmp1 := strings.Split((runtime.FuncForPC(pc).Name()), ".")
+			pkgname := tmp1[0]
+			srcFile := pkgname + "/" + path.Base(fn)
+			funcName := tmp1[1]
+
+			msgPrefix := ""
+			if loglevelStr == "DBGRM" {
+				msgPrefix = "#### "
+			}
+
+			////logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s: %d] [%s]:\n", strcomponent, msgTimeStamp, loglevelStr, filepath.Base(fn), line, runtime.FuncForPC(pc).Name())
+			////logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s: %d] [%s]:\n",
+				////strcomponent, msgTimeStamp, loglevelStr, filePath[len(filePath) - 1], line, runtime.FuncForPC(pc).Name())
+			//logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s: %d] [%s]:\n", strcomponent, msgTimeStamp, loglevelStr, srcFile, line, runtime.FuncForPC(pc).Name())
+			logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s +%d]@[%s]:\n", strcomponent, msgTimeStamp, loglevelStr, srcFile, line, funcName)
+
+			logMsg = fmt.Sprintf(logMsg+msg, args...)
+			logMsg = msgPrefix + logMsg + "\n"
+
+			if !isLoggerInstanceInit {
+				//logMsg = msgLoglevel.color + msgPrefix + logMsg + colorNornal + "\n"
+				logMsg = msgLoglevel.color + logMsg + colorNornal
+				fmt.Printf(logMsg)
+				return
+			}
+
+			logMessage := logmessage {
+				component: strcomponent,
+				logmsg: logMsg,
+			}
+
+			chanbuffLog <- logMessage
 	}
-	if (msgLoglevel.wt < currentLoglevel.wt) && (currentLoglevel.wt != 1) {  // silently slips through a DBGRM message when currentLoglevel.wt is 1, ie, DEBUG.
-		return
-	}
-
-	t := time.Now()
-	zonename, _ := t.In(time.Local).Zone()
-	msgTimeStamp := fmt.Sprintf("%02d-%02d-%d:%02d%02d%02d-%06d-%s", t.Day(), t.Month(), t.Year(), t.Hour(), t.Minute(),
-		t.Second(), t.Nanosecond(), zonename)
-
-	pc, fn, line, _ := runtime.Caller(1)
-
-	//gwd, _ := os.Getwd()
-	//fmt.Printf("dbgrm::  gwd: %s\n", gwd)
-	////_, filePath := getFilePath(fn, srcBaseDir)
-	////srcFile1 := strings.Split(str1, str2)
-	//filePath := strings.Split(fn, srcBaseDir)
-	//srcFile := srcBaseDir + filePath[len(filePath) - 1]
-
-	tmp1 := strings.Split((runtime.FuncForPC(pc).Name()), ".")
-	pkgname := tmp1[0]
-	srcFile := pkgname + "/" + path.Base(fn)
-	funcName := tmp1[1]
-
-	msgPrefix := ""
-	if loglevelStr == "DBGRM" {
-		msgPrefix = "#### "
-	}
-
-	////logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s: %d] [%s]:\n", strcomponent, msgTimeStamp, loglevelStr, filepath.Base(fn), line, runtime.FuncForPC(pc).Name())
-	////logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s: %d] [%s]:\n", strcomponent, msgTimeStamp, loglevelStr, filePath[len(filePath) - 1], line, runtime.FuncForPC(pc).Name())
-	//logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s: %d] [%s]:\n", strcomponent, msgTimeStamp, loglevelStr, srcFile, line, runtime.FuncForPC(pc).Name())
-	logMsg := fmt.Sprintf("[%s] [%s] [%s] [%s +%d]@[%s]:\n", strcomponent, msgTimeStamp, loglevelStr, srcFile, line, funcName)
-
-	logMsg = fmt.Sprintf(logMsg+msg, args...)
-	logMsg = msgPrefix + logMsg + "\n"
-
-	if !isLoggerInstanceInit {
-		//logMsg = msgLoglevel.color + msgPrefix + logMsg + colorNornal + "\n"
-		logMsg = msgLoglevel.color + logMsg + colorNornal
-		fmt.Printf(logMsg)
-		return
-	}
-
-	logMessage := logmessage {
-		component: strcomponent,
-		logmsg: logMsg,
-	}
-
-	chanbuffLog <- logMessage
 }
 
 
@@ -174,7 +181,8 @@ Return Value: na
 
 Additional note: na
 **************************************************************************** */
-func LogDispatcher(ploggerWG *sync.WaitGroup, doneChan chan bool) {
+//func LogDispatcher(ploggerWG *sync.WaitGroup, doneChan chan bool) {
+func LogDispatcher(ploggerWG *sync.WaitGroup) {
 	defer func() {
 		fmt.Println("logger exiting.")
 		ploggerWG.Done()
@@ -199,10 +207,9 @@ func LogDispatcher(ploggerWG *sync.WaitGroup, doneChan chan bool) {
 				dumpServerLog(logMsg.logmsg)
 				break
 
-			case <-doneChan:  // chanbuffLog needs to be closed. pull all the logs from the channel and dump them to file-system.
+			case <-doneChan:  // chanbuffLog has been closed. pull all the logs from the channel and dump them to file-system.
 				runFlag = false
 				dumpServerLog("[WARNING]:: logger exiting. breaking out on closed log message-queue.\nstarting to flush all the blocked logs.\n")
-				close(chanbuffLog)
 				for logMsg := range chanbuffLog {
 					dumpServerLog(logMsg.logmsg)
 				}
@@ -344,7 +351,7 @@ Return value:
 
 Additional note: na
 ***************************************************************************** */
-func Init(isLoggerInit bool, tmpSrcBaseDir string, logBaseDir string, logLevel string) bool {
+func Init(isLoggerInit bool, tmpSrcBaseDir string, logBaseDir string, logLevel string, donechan chan bool) bool {
 	if isInit {
 		return true
 	}
@@ -414,6 +421,7 @@ func Init(isLoggerInit bool, tmpSrcBaseDir string, logBaseDir string, logLevel s
 	}
 
 	isInit = true
+	doneChan = donechan
 	return true
 }
 
