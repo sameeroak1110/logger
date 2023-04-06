@@ -412,7 +412,6 @@ func Init(isLoggerInit bool, tmpSrcBaseDir string, logBaseDir string, logLevel s
 	}
 
 	isInit = true
-	doneChan = donechan
 	return true
 }
 
