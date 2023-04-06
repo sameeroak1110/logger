@@ -153,9 +153,11 @@ func Log(strcomponent string, loglevelStr string, msg string, args ...interface{
 		logmsg: logMsg,
 	}
 
+	pDoneChanLock.Lock()
 	if doneChanFlag == false {
 		chanbuffLog <- logMessage
 	}
+	pDoneChanLock.Unlock()
 }
 
 
@@ -201,6 +203,7 @@ func LogDispatcher(ploggerWG *sync.WaitGroup, doneChan chan bool) {
 				break
 
 			case <-doneChan:  // chanbuffLog has been closed. pull all the logs from the channel and dump them to file-system.
+				pDoneChanLock.Lock()
 				doneChanFlag = true
 				runFlag = false
 				dumpServerLog("[WARNING]:: logger exiting. breaking out on closed log message-queue.\nstarting to flush all the blocked logs.\n")
@@ -209,6 +212,7 @@ func LogDispatcher(ploggerWG *sync.WaitGroup, doneChan chan bool) {
 				for logMsg := range chanbuffLog {
 					dumpServerLog(logMsg.logmsg)
 				}
+				pDoneChanLock.Unlock()
 				break
 		}
 	}
@@ -415,6 +419,8 @@ func Init(isLoggerInit bool, tmpSrcBaseDir string, logBaseDir string, logLevel s
 			fmt.Printf("Debug: Reused STDOUT.\n")
 		}
 	}
+
+	pDoneChanLock = &sync.Mutex
 
 	isInit = true
 	return true

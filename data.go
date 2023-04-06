@@ -19,6 +19,7 @@ package logger
 
 import (
 	"os"
+	"sync"
 )
 
 
@@ -84,3 +85,4 @@ var loglevelMap = map[string]loglevel {
 
 //var doneChan chan bool
 var doneChanFlag bool
+var pDoneChanLock *sync.Mutex
