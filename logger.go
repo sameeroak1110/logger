@@ -153,7 +153,9 @@ func Log(strcomponent string, loglevelStr string, msg string, args ...interface{
 		logmsg: logMsg,
 	}
 
-	chanbuffLog <- logMessage
+	if doneChanFlag == false {
+		chanbuffLog <- logMessage
+	}
 }
 
 
@@ -199,8 +201,11 @@ func LogDispatcher(ploggerWG *sync.WaitGroup, doneChan chan bool) {
 				break
 
 			case <-doneChan:  // chanbuffLog has been closed. pull all the logs from the channel and dump them to file-system.
+				doneChanFlag = true
 				runFlag = false
 				dumpServerLog("[WARNING]:: logger exiting. breaking out on closed log message-queue.\nstarting to flush all the blocked logs.\n")
+				time.Sleep(10 * time.Second)
+				close(chanbuffLog)
 				for logMsg := range chanbuffLog {
 					dumpServerLog(logMsg.logmsg)
 				}
