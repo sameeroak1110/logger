@@ -172,8 +172,8 @@ Return Value: na
 
 Additional note: na
 **************************************************************************** */
-//func LogDispatcher(ploggerWG *sync.WaitGroup, doneChan chan bool) {
-func LogDispatcher(ploggerWG *sync.WaitGroup) {
+//func LogDispatcher(ploggerWG *sync.WaitGroup) {
+func LogDispatcher(ploggerWG *sync.WaitGroup, doneChan chan bool) {
 	defer func() {
 		fmt.Println("logger exiting.")
 		ploggerWG.Done()
