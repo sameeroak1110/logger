@@ -420,7 +420,7 @@ func Init(isLoggerInit bool, tmpSrcBaseDir string, logBaseDir string, logLevel s
 		}
 	}
 
-	pDoneChanLock = &sync.Mutex
+	pDoneChanLock = &sync.Mutex{}
 
 	isInit = true
 	return true
