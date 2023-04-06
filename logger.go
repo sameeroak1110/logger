@@ -342,7 +342,7 @@ Return value:
 
 Additional note: na
 ***************************************************************************** */
-func Init(isLoggerInit bool, tmpSrcBaseDir string, logBaseDir string, logLevel string, donechan chan bool) bool {
+func Init(isLoggerInit bool, tmpSrcBaseDir string, logBaseDir string, logLevel string) bool {
 	if isInit {
 		return true
 	}
