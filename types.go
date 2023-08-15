@@ -13,7 +13,7 @@ Version History
 Version     : 1.0
 Author      : sameer oak (sameeroak1110@gmail.com)
 Description :
-- User defined data-types used by logger package.
+- User defined types used by logger package.
 ***************************************************************************** */
 package logger
 

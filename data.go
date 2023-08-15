@@ -20,6 +20,7 @@ package logger
 import (
 	"os"
 	"sync"
+	"context"
 )
 
 
@@ -32,6 +33,7 @@ const ERROR string = "ERROR"      // red
 
 // buffered channel with size 10.
 var chanbuffLog chan logmessage
+//var closeChanBuffLog chan logmessage
 
 // log-file file handler.
 var pServerLogFile *os.File
@@ -86,3 +88,7 @@ var loglevelMap = map[string]loglevel {
 //var doneChan chan bool
 var doneChanFlag bool
 var pDoneChanLock *sync.Mutex
+var ctx context.Context
+
+var endLogger <-chan bool
+var loggerDone chan<-bool

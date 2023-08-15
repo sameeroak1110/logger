@@ -1,3 +1,3 @@
 module github.com/sameeroak1110/logger
 
-go 1.17
+go 1.20
