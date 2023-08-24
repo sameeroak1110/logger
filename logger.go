@@ -39,6 +39,7 @@ import (
 	"syscall"
 	"strings"
 	"context"
+	"runtime/debug"
 )
 
 
@@ -66,6 +67,7 @@ func Log(strcomponent string, loglevelStr string, msg string, args ...interface{
 	defer func() {  // chanbuffLog has been closed.
 		if recoverVal := recover(); recoverVal != nil {
 			fmt.Println("[WARNING]::  Log(): recover value:", recoverVal, "\nlogMessage:", logMessage)
+			debug.PrintStack()
 		}
 	}()
 
