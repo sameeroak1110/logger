@@ -44,7 +44,8 @@ var dummyLogfile string
 //var loggerWG sync.WaitGroup
 
 const log_MAX_FILES int8 = 10
-const log_FILE_NAME_PREFIX string = "server.log"
+//const log_FILE_NAME_PREFIX string = "server.log"
+var log_FILE_NAME_PREFIX string
 const log_FILE_SIZE int64 = 20971520 // 20 MB
 var current_LOG_LEVEL string = "DBGRM"
 

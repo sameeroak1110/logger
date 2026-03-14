@@ -280,9 +280,14 @@ Return value:
 
 Additional note: na
 ***************************************************************************** */
-func Init(_ctx context.Context, appdone chan bool, isLoggerInit bool, logBaseDir string, logLevel string) bool {
+func Init(_ctx context.Context, appdone chan bool, isLoggerInit bool, logBaseDir string, logLevel string, name string) bool {
 	if isInit {
 		return true
+	}
+
+	log_FILE_NAME_PREFIX = name
+	if (name == "") || (len(name) < 1) {
+		log_FILE_NAME_PREFIX = "app.log"
 	}
 
 	logLevel = strings.ToUpper(strings.TrimSpace(logLevel))
